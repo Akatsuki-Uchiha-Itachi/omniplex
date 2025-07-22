@@ -1,8 +1,8 @@
-import { initializeApp } from "firebase/app";
-import { getStorage } from "firebase/storage";
+import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
-// Firebase Config
+// Firebase config
 export const firebaseConfig = {
   apiKey: "",
   authDomain: "",
@@ -10,16 +10,21 @@ export const firebaseConfig = {
   storageBucket: "",
   messagingSenderId: "",
   appId: "",
-  measurementId: "",
+  measurementId: ""
 };
 
-const app = initializeApp(firebaseConfig);
+// Initialize the app only once
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
-const db = getFirestore(app);
-const storage = getStorage(app);
-
-export { db, storage };
-
-export const initializeFirebase = () => {
-  return app;
+// Functions to get Firestore and Storage safely (only in browser)
+export const getDB = () => {
+  if (typeof window === "undefined") return null;
+  return getFirestore(app);
 };
+
+export const getStorageInstance = () => {
+  if (typeof window === "undefined") return null;
+  return getStorage(app);
+};
+
+export { app };
