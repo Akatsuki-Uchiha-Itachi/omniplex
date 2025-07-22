@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { selectAuthState } from "@/store/authSlice";
 import { useDisclosure } from "@nextui-org/modal";
+import { loadStripe } from "@stripe/stripe-js";
 
 import Logo from "../../../public/Logo.svg";
 import Menu from "../../../public/svgs/Menu.svg";
@@ -28,6 +29,10 @@ import PluginInactive from "../../../public/svgs/sidebar/Plugin_Inactive.svg";
 import User from "../../../public/svgs/sidebar/User.svg";
 import Collapse from "../../../public/svgs/sidebar/Collapse.svg";
 
+const stripePromise = loadStripe(
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string
+);
+
 const Sidebar = () => {
   const router = useRouter();
   const authState = useSelector(selectAuthState);
@@ -42,9 +47,7 @@ const Sidebar = () => {
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
     handleResize();
-
     window.addEventListener("resize", handleResize);
-
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
@@ -57,11 +60,9 @@ const Sidebar = () => {
         closeSidebar();
       }
     };
-
     if (width <= 512) {
       document.addEventListener("mousedown", handleClickOutside);
     }
-
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
@@ -102,6 +103,20 @@ const Sidebar = () => {
   const handleNewChat = () => {
     router.push("/");
   };
+
+  const handleBuyProPlan = async () => {
+  const stripe = await stripePromise;
+  const res = await fetch("/api/stripe", { method: "POST" });
+  const data = await res.json();
+
+  if (!data.id) {
+    alert("Failed to create Stripe session");
+    console.error("Stripe session creation failed", data);
+    return;
+  }
+
+  await stripe?.redirectToCheckout({ sessionId: data.id });
+};
 
   return (
     <>
@@ -212,6 +227,22 @@ const Sidebar = () => {
                     onClick={handleProfileClick}
                   />
                 </div>
+              </div>
+              {/* Buy Pro Plan Button */}
+              <div
+                onClick={handleBuyProPlan}
+                style={{
+                  cursor: "pointer",
+                  marginTop: "20px",
+                  padding: "10px",
+                  backgroundColor: "#4F46E5",
+                  borderRadius: "8px",
+                  textAlign: "center",
+                  color: "white",
+                  fontWeight: "bold",
+                }}
+              >
+                Buy Pro Plan - $10
               </div>
             </div>
             <div className={styles.mainContainer}>
